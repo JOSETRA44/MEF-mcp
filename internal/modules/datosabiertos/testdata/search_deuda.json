@@ -1,0 +1,44 @@
+{
+ "countTotal": "5",
+ "datasets": [
+  {
+   "dataset": "Instrumentos de Deuda de Corto Plazo",
+   "dataset_id": "instrumentos-de-deuda-de-corto-plazo",
+   "description": "InformaciÃ³n diaria de las tasas de las letras del Tesoro PÃºblico, entre los aÃ±os 2015 y 2020.",
+   "formats": "CSV",
+   "tags": "Letras,Tesoro PÃºblico"
+  },
+  {
+   "dataset": "Instrumentos de Deuda de Largo Plazo",
+   "dataset_id": "instrumentos-de-deuda-de-largo-plazo",
+   "description": "InformaciÃ³n diaria de las tasas de los bonos soberanos y VAC del Tesoro PÃºblico, entre los aÃ±os 2010 y 2024.",
+   "formats": "CSV",
+   "tags": "Bonos,Tesoro PÃºblico"
+  },
+  {
+   "dataset": "Servicio de deuda - Deuda atendida",
+   "dataset_id": "servicio-de-deuda-deuda-atendida",
+   "description": "Servicio Atendido de una OperaciÃ³n de Endeudamiento PÃºblico.",
+   "formats": "CSV",
+   "tags": "Deuda PÃºblica,Endeudamiento"
+  },
+  {
+   "dataset": "Servicio de deuda - Deuda proyectada",
+   "dataset_id": "servicio-de-deuda-deuda-proyectada",
+   "description": "Servicio Proyectado de una OperaciÃ³n de Endeudamiento PÃºblico.",
+   "formats": "CSV",
+   "tags": "Deuda PÃºblica,Endeudamiento"
+  },
+  {
+   "dataset": "Servicio de deuda - Saldo adeudado",
+   "dataset_id": "servicio-de-deuda-saldo-adeudado",
+   "description": "Saldo Adeudado de una OperaciÃ³n de Endeudamiento PÃºblico.",
+   "formats": "CSV",
+   "tags": "Deuda PÃºblica,Endeudamiento"
+  }
+ ],
+ "oCod": "200",
+ "page": 1,
+ "pagesCount": 1,
+ "status": "0000"
+}

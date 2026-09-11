@@ -1,0 +1,13 @@
+{
+   "sucess" : "true",
+   "records" : null,
+   "result" : {
+      "resource_id" : "510bae6d-3d37-4fb2-af35-a40ce01715f4",
+      "limit" : "1",
+      "records_format" : "objects",
+      "total_estimation_threshold" : "null",
+      "include_total" : "0"
+   },
+   "next" : "https://api.datosabiertos.mef.gob.pe/DatosAbiertos/v1/datastore_search?resource_id=510bae6d-3d37-4fb2-af35-a40ce01715f4&offset=1&limit=1",
+   "help" : "https://api.datosabiertos.mef.gob.pe/?/DatosAbiertos/v1/datastore_search"
+}
