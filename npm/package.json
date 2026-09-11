@@ -1,0 +1,29 @@
+{
+  "name": "mef-mcp",
+  "version": "0.1.0",
+  "mcpName": "io.github.JOSETRA44/mef-mcp",
+  "description": "MCP server and CLI for Peru's Ministry of Economy and Finance (MEF): daily budget execution, open data and public investment projects.",
+  "license": "MIT",
+  "author": "JOSETRA44",
+  "homepage": "https://github.com/JOSETRA44/mef-mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JOSETRA44/mef-mcp.git",
+    "directory": "npm"
+  },
+  "keywords": ["mcp", "model-context-protocol", "peru", "mef", "presupuesto", "budget", "open-data", "invierte-pe", "cli"],
+  "bin": {
+    "mef-mcp": "bin/mef-mcp.js",
+    "mef": "bin/mef.js"
+  },
+  "files": ["bin/"],
+  "engines": { "node": ">=18" },
+  "optionalDependencies": {
+    "@josetra44/mef-mcp-win32-x64": "0.1.0",
+    "@josetra44/mef-mcp-win32-arm64": "0.1.0",
+    "@josetra44/mef-mcp-linux-x64": "0.1.0",
+    "@josetra44/mef-mcp-linux-arm64": "0.1.0",
+    "@josetra44/mef-mcp-darwin-x64": "0.1.0",
+    "@josetra44/mef-mcp-darwin-arm64": "0.1.0"
+  }
+}
