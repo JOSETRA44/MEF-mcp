@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.JOSETRA44/mef-mcp",
+  "title": "MEF Perú",
+  "description": "Live data from Peru's Ministry of Economy and Finance: daily budget execution, open data and public investment projects.",
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/JOSETRA44/mef-mcp#readme",
+  "repository": {
+    "url": "https://github.com/JOSETRA44/mef-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "mef-mcp",
+      "version": "0.1.0",
+      "runtimeHint": "npx",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "MEF_HOME",
+          "description": "Directory for the response cache and the local SQLite database. Defaults to %LOCALAPPDATA%\\mef-mcp on Windows and the OS cache directory elsewhere.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "MEF_DB",
+          "description": "Explicit path of the SQLite database used by mef_sync and mef_sql. Defaults to <MEF_HOME>/mef.db.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
