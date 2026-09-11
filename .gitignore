@@ -1,0 +1,19 @@
+# Build output
+/dist/
+/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Local state (never commit data pulled from MEF)
+*.db
+*.db-wal
+*.db-shm
+*.part
+.env
+
+# npm wrapper artefacts
+/npm/node_modules/
+/npm/bin/*
+!/npm/bin/mef-mcp.js

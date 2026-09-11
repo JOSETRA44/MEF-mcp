@@ -1,0 +1,50 @@
+version: 2
+project_name: mef-mcp
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: mef
+    main: ./cmd/mef
+    binary: mef
+    env: [CGO_ENABLED=0]
+    goos: [windows, linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: [-s -w]
+  - id: mef-mcp
+    main: ./cmd/mef-mcp
+    binary: mef-mcp
+    env: [CGO_ENABLED=0]
+    goos: [windows, linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: [-s -w]
+
+archives:
+  - id: default
+    ids: [mef, mef-mcp]
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [LICENSE, README.md, CHANGELOG.md]
+
+checksum:
+  name_template: checksums.txt
+
+scoops:
+  - name: mef-mcp
+    repository:
+      owner: JOSETRA44
+      name: scoop-bucket
+    homepage: https://github.com/JOSETRA44/mef-mcp
+    description: CLI y servidor MCP para datos del MEF del Perú
+    license: MIT
+
+changelog:
+  use: git
