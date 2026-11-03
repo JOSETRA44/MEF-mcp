@@ -3,7 +3,7 @@
   "name": "io.github.JOSETRA44/mef-mcp",
   "title": "MEF Perú",
   "description": "Live data from Peru's Ministry of Economy and Finance: daily budget execution, open data and public investment projects.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "websiteUrl": "https://github.com/JOSETRA44/mef-mcp#readme",
   "repository": {
     "url": "https://github.com/JOSETRA44/mef-mcp",
@@ -14,7 +14,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "mef-mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "runtimeHint": "npx",
       "transport": { "type": "stdio" },
       "environmentVariables": [
@@ -27,6 +27,12 @@
         {
           "name": "MEF_DB",
           "description": "Explicit path of the SQLite database used by mef_sync and mef_sql. Defaults to <MEF_HOME>/mef.db.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "MEF_OUTPUT",
+          "description": "Directory where mef_reporte writes xlsx/html/md deliverables. Defaults to <MEF_HOME>/output.",
           "isRequired": false,
           "isSecret": false
         }
