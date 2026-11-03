@@ -74,6 +74,14 @@ var byName = func() map[string]Dimension {
 	return m
 }()
 
+// normalizeText folds case and accents but keeps word boundaries, for
+// matching entity names. Compare with normalize, which also collapses spaces
+// into dashes because dimension aliases are written that way.
+func normalizeText(s string) string {
+	r := strings.NewReplacer("á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u", "ü", "u", "ñ", "n")
+	return r.Replace(strings.ToLower(strings.TrimSpace(s)))
+}
+
 // normalize folds case, accents and separators so "Función", "funcion" and
 // "FUNCION" resolve to the same dimension.
 func normalize(s string) string {
