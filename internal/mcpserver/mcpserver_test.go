@@ -52,6 +52,23 @@ func callTool(t *testing.T, cs *mcp.ClientSession, name string, args map[string]
 	return env, res.IsError
 }
 
+// Phrases that count as usage guidance and as behavioural transparency. A
+// description is free to word it either way; it may not skip it.
+var (
+	usageMarkers     = []string{"Use it", "Use them", "Use this", "Reach for it", "Prefer it"}
+	behaviourMarkers = []string{"Behaviour", "cached", "Answered locally", "local only", "no network"}
+)
+
+func hasMarker(description string, markers []string) bool {
+	lower := strings.ToLower(description)
+	for _, m := range markers {
+		if strings.Contains(lower, strings.ToLower(m)) {
+			return true
+		}
+	}
+	return false
+}
+
 func TestToolsListMatchesRegistry(t *testing.T) {
 	cs := connect(t, &testutil.Fake{})
 	list, err := cs.ListTools(context.Background(), nil)
@@ -72,10 +89,17 @@ func TestToolsListMatchesRegistry(t *testing.T) {
 			t.Errorf("tool %s not served", c.Tool)
 			continue
 		}
-		// DOCS-STANDARD §6: the weakest description drags the server score,
-		// so every one must say when to use it and how it behaves.
-		if len(tool.Description) < 300 || !strings.Contains(tool.Description, "Use ") {
-			t.Errorf("%s: description too thin (%d chars)", tool.Name, len(tool.Description))
+		// DOCS-STANDARD §6: the weakest description drags the whole server
+		// score, so every one must carry purpose, usage guidance and
+		// behaviour. The failure says which of the three is missing.
+		if n := len(tool.Description); n < 300 {
+			t.Errorf("%s: description is %d chars, too thin for purpose + usage + behaviour", tool.Name, n)
+		}
+		if !hasMarker(tool.Description, usageMarkers) {
+			t.Errorf("%s: description never says when to reach for it (looked for: %s)", tool.Name, strings.Join(usageMarkers, " / "))
+		}
+		if !hasMarker(tool.Description, behaviourMarkers) {
+			t.Errorf("%s: description never states behaviour — latency, caching or what an empty result means", tool.Name)
 		}
 		schema, _ := json.Marshal(tool.InputSchema)
 		if !strings.Contains(string(schema), `"type":"object"`) {
