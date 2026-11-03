@@ -11,7 +11,7 @@ package amigable
 import (
 	"context"
 	"fmt"
-	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -102,7 +102,24 @@ func BuildQuery(year int, tipo, by string, where [][2]string, page, size int) (Q
 }
 
 func (m *Module) Commands() []*core.Command {
-	return []*core.Command{m.gasto(), m.dimensiones()}
+	return []*core.Command{m.gasto(), m.serie(), m.entidades(), m.dimensiones()}
+}
+
+// Command exposes one command by its CLI leaf name so other modules can run
+// the same query instead of reimplementing it. mef_reporte uses this: a report
+// of spending is the output of mef_gasto, not a second copy of its logic.
+func (m *Module) Command(name string) *core.Command {
+	switch name {
+	case "gasto":
+		return m.gasto()
+	case "serie":
+		return m.serie()
+	case "entidades":
+		return m.entidades()
+	case "dimensiones":
+		return m.dimensiones()
+	}
+	return nil
 }
 
 func (m *Module) gasto() *core.Command {
@@ -115,6 +132,10 @@ func (m *Module) gasto() *core.Command {
 			Help: "Fiscal year 1999–current, e.g. 2026. 0 or omitted = current year."},
 		{Name: "type", Type: core.TypeString, Default: "todo", Enum: []string{"todo", "actividad", "proyecto"},
 			Help: `Spending type: "todo" (actividades y proyectos), "actividad" (gasto corriente/operativo) or "proyecto" (inversión).`},
+		{Name: "sort", Type: core.TypeString, Default: "", Enum: []string{"", "devengado", "pim", "pia", "certificacion", "compromiso_anual", "compromiso_mensual", "girado", "avance", "nombre", "codigo"},
+			Help: `Sort the rows server-side, e.g. "devengado" for the biggest spenders or "avance" with desc=false for the laggards. Empty keeps MEF's own order.`},
+		{Name: "desc", Type: core.TypeBool, Default: true,
+			Help: "Sort descending (default). Set false for ascending, e.g. lowest avance first."},
 		{Name: "page", Type: core.TypeInt, Default: 1, Min: core.IntPtr(1), Help: "Page number when not using all, e.g. 2."},
 		{Name: "page_size", Type: core.TypeInt, Default: PageSize, Min: core.IntPtr(1), Max: core.IntPtr(PageSize),
 			Help: "Rows per upstream page, 1–1000."},
@@ -128,6 +149,8 @@ func (m *Module) gasto() *core.Command {
 
 Use it for "how much has X spent", "which regions/sectors execute least", "execution by month", or any drill-down: group with "by" (e.g. sector, pliego, ejecutora, departamento-meta, funcion, generica, fuente, mes) and narrow with ordered "where" filters whose keys come from the "codigo" column of a previous call — e.g. first by=sector, then where=["sector=11"] by=pliego. Nivel accepts E/R/M or nacional/regional/local.
 
+With "sort" the ranking is computed here — "sort=devengado" for the biggest spenders, "sort=avance" with "desc=false" for the laggards — so a top-10 needs no arithmetic on your side; combine it with "max". For several years at once use mef_serie, for conclusions mef_analizar, for a file mef_reporte, and to turn an institution's name into a filter mef_entidades.
+
 Behaviour: one upstream request per page (up to 1000 rows), about 1–2 s; grouping by meta, finalidad or actividad without filters takes 15–30 s upstream. Responses are cached on disk for hours (meta.last_updated shows MEF's own refresh date). An empty result means no spending matches, not an error. Invalid dimensions or a dimension both filtered and grouped fail with a usage error listing valid names.
 
 Not for: investment project sheets by CUI (use mef_inversion_ficha) or open-data files (use mef_datos_buscar). Income/revenue (ingresos) is not covered by this tool.`,
@@ -138,6 +161,7 @@ Not for: investment project sheets by CUI (use mef_inversion_ficha) or open-data
 		ReadOnly:    true,
 		Examples: []string{
 			"mef amigable gasto --year 2026 --by nivel",
+			"mef amigable gasto --by pliego --where nivel=E --sort devengado --max 10",
 			"mef amigable gasto --by sector --where nivel=E -f csv -o sectores.csv",
 			"mef amigable gasto --by departamento-meta --type proyecto --year 2025",
 			"mef amigable gasto --by mes --where sector=11,pliego=011 -f json",
@@ -166,13 +190,14 @@ func (m *Module) runGasto(ctx context.Context, env *core.Env, in core.Input, sin
 		return nil, err
 	}
 
-	timeout := 60
-	if q.GroupBy.Slow {
-		timeout = 150
-		if env.Progress != nil {
-			env.Progress("grouping by %s is slow upstream (15–30 s)…", q.GroupBy.Alias)
-		}
+	if q.GroupBy.Slow && env.Progress != nil {
+		env.Progress("grouping by %s is slow upstream (15–30 s)…", q.GroupBy.Alias)
 	}
+	// Sorting has to see every row before emitting any, so those requests
+	// buffer instead of streaming. sortCap keeps that bounded.
+	sortKey := in.Str("sort")
+	const sortCap = 20000
+	var buf []Line
 
 	var (
 		lastUpdated, header string
@@ -184,26 +209,20 @@ func (m *Module) runGasto(ctx context.Context, env *core.Env, in core.Input, sin
 		budgetless          bool
 	)
 	for {
-		if w := sink.Wanted(); w == 0 {
+		if sortKey == "" {
+			if w := sink.Wanted(); w == 0 {
+				hasMore = true
+				break
+			}
+		} else if len(buf) >= sortCap {
 			hasMore = true
 			break
 		}
-		raw := httpx.OrderedQuery(q.Pairs())
-		resp, err := env.HTTP.Do(ctx, core.Request{
-			Method: "GET", URL: m.Endpoint, Query: url.Values{"_raw": {raw}},
-			TTLKey: "amigable/gasto", Timeout: timeout, Charset: "mixed",
-		})
+		pg, fromCache, err := m.fetchPage(ctx, env, q)
 		if err != nil {
 			return nil, err
 		}
-		cachedAll = cachedAll && resp.Cached
-		if resp.Status != 200 {
-			return nil, core.NewError(core.CodeAPI, "", "Consulta Amigable answered HTTP %d", resp.Status)
-		}
-		pg, appErr := ParsePage(string(resp.Body))
-		if appErr && len(pg.Lines) == 0 {
-			return nil, core.NewError(core.CodeAPI, "The navigator raised a server error for this combination; try fewer filters.", "Consulta Amigable returned an error page")
-		}
+		cachedAll = cachedAll && fromCache
 		pages++
 		if pg.LastUpdated != "" {
 			lastUpdated = pg.LastUpdated
@@ -220,6 +239,10 @@ func (m *Module) runGasto(ctx context.Context, env *core.Env, in core.Input, sin
 			totals.CompMensual += l.CompMensual
 			totals.Devengado += l.Devengado
 			totals.Girado += l.Girado
+			if sortKey != "" {
+				buf = append(buf, l)
+				continue
+			}
 			if err := sink.Emit(lineRow(l)); err != nil {
 				return nil, err
 			}
@@ -240,13 +263,25 @@ func (m *Module) runGasto(ctx context.Context, env *core.Env, in core.Input, sin
 		}
 	}
 
+	if sortKey != "" {
+		SortLines(buf, sortKey, in.Bool("desc"))
+		for _, l := range buf {
+			if sink.Wanted() == 0 {
+				break
+			}
+			if err := sink.Emit(lineRow(l)); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	filters := make([]map[string]any, 0, len(q.Filters))
 	for _, f := range q.Filters {
 		filters = append(filters, map[string]any{"dimension": f.Dim.Alias, "codigo": f.Dim.Code, "valor": f.Value})
 	}
 	meta := map[string]any{
 		"year": q.Year, "type": q.Tipo, "group_by": q.GroupBy.Alias, "group_by_code": q.GroupBy.Code,
-		"group_header": header, "filters": filters, "pages": pages, "page_size": q.PageSize,
+		"group_header": header, "filters": filters, "pages": pages, "page_size": q.PageSize, "sort": sortKey,
 		"has_more": hasMore, "last_updated": lastUpdated, "currency": "PEN",
 		"source_url":      m.Endpoint + "?" + httpx.OrderedQuery(q.Pairs()),
 		"upstream_cached": cachedAll,
@@ -264,6 +299,44 @@ func (m *Module) runGasto(ctx context.Context, env *core.Env, in core.Input, sin
 		res.Notes = append(res.Notes, "more rows available: add --all (or raise --page)")
 	}
 	return res, nil
+}
+
+// SortLines orders rows by one of mef_gasto's columns. Names use Spanish
+// collation loosely (accent-folded) so "Ñ" lands where a reader expects.
+func SortLines(lines []Line, key string, desc bool) {
+	value := func(l Line) float64 {
+		switch key {
+		case "devengado":
+			return l.Devengado
+		case "pim":
+			return l.PIM
+		case "pia":
+			return l.PIA
+		case "certificacion":
+			return l.Certificado
+		case "compromiso_anual":
+			return l.CompAnual
+		case "compromiso_mensual":
+			return l.CompMensual
+		case "girado":
+			return l.Girado
+		case "avance", "avance_pct":
+			return l.AvancePct
+		}
+		return 0
+	}
+	less := func(i, j int) bool { return value(lines[i]) < value(lines[j]) }
+	switch key {
+	case "nombre":
+		less = func(i, j int) bool { return normalize(lines[i].Name) < normalize(lines[j].Name) }
+	case "codigo":
+		less = func(i, j int) bool { return lines[i].Code < lines[j].Code }
+	}
+	if desc {
+		inner := less
+		less = func(i, j int) bool { return inner(j, i) }
+	}
+	sort.SliceStable(lines, less)
 }
 
 func lineRow(l Line) core.Row {

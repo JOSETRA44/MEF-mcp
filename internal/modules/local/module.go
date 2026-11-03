@@ -464,3 +464,17 @@ func str(v any) any {
 	}
 	return v
 }
+
+// Command exposes one command by its CLI leaf name so other modules can run
+// it instead of reimplementing it; mef_reporte uses sql as a report source.
+func (m *Module) Command(name string) *core.Command {
+	switch name {
+	case "sync":
+		return m.sync()
+	case "sql":
+		return m.sql()
+	case "tablas":
+		return m.tablas()
+	}
+	return nil
+}

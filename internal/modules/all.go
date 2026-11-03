@@ -9,7 +9,9 @@ package modules
 import (
 	"github.com/JOSETRA44/mef-mcp/internal/core"
 	"github.com/JOSETRA44/mef-mcp/internal/modules/amigable"
+	"github.com/JOSETRA44/mef-mcp/internal/modules/asistente"
 	"github.com/JOSETRA44/mef-mcp/internal/modules/datosabiertos"
+	"github.com/JOSETRA44/mef-mcp/internal/modules/informes"
 	"github.com/JOSETRA44/mef-mcp/internal/modules/invierte"
 	"github.com/JOSETRA44/mef-mcp/internal/modules/local"
 )
@@ -17,10 +19,14 @@ import (
 // Registry builds the production registry.
 func Registry() *core.Registry {
 	da := datosabiertos.New()
+	am := amigable.New()
+	lo := local.New(da)
 	return core.NewRegistry([]core.Module{
-		amigable.New(),
+		am,
 		da,
 		invierte.New(),
-		local.New(da),
+		lo,
+		informes.New(am, lo),
+		asistente.New(),
 	})
 }
