@@ -35,3 +35,12 @@ func DBPath() string {
 	}
 	return filepath.Join(Home(), "mef.db")
 }
+
+// OutputDir holds generated reports (xlsx, html, md). MEF_OUTPUT overrides it.
+// Reports are deliverables, not cache: mef never deletes anything here.
+func OutputDir() string {
+	if d := os.Getenv("MEF_OUTPUT"); d != "" {
+		return d
+	}
+	return filepath.Join(Home(), "output")
+}
