@@ -1,4 +1,5 @@
-<img width="1600" height="500" alt="MEF-MCP _ README banner _ 1600 × 500 (1)" src="https://github.com/user-attachments/assets/444f5e5a-82d5-45d6-8fce-68b53e731db6" />
+<img width="1600" height="500" alt="MEF-MCP _ README banner _ 1600 × 500 (2)" src="https://github.com/user-attachments/assets/883a3817-d57f-4564-bcae-4f84138a14af" />
+
 
 
 # mef-mcp — datos del MEF del Perú para agentes y personas
