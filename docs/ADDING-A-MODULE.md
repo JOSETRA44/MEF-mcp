@@ -112,7 +112,29 @@ Cubre: parseo del fixture real (con totales contrastados contra la web), errores
 
 Los tests existentes en `internal/cli` y `internal/mcpserver` verificarán automáticamente que el comando aparezca en `describe`, que sus ejemplos parseen y que la tool tenga una descripción suficiente.
 
-## 5. Documenta
+## 5. Hazlo reutilizable (opcional)
+
+Si tu fuente devuelve filas con montos, expón sus comandos por nombre y
+`mef_reporte` podrá generar Excel y HTML de ellas sin cambios:
+
+```go
+// Command exposes one command by its CLI leaf name so other modules can run
+// the same query instead of reimplementing it.
+func (m *Module) Command(name string) *core.Command {
+	switch name {
+	case "recaudado":
+		return m.recaudado()
+	}
+	return nil
+}
+```
+
+`internal/modules/informes` ejecuta ese comando con un sink que captura filas,
+analiza su columna de monto y escribe el documento. Para que el análisis
+funcione, nombra las columnas como el resto del proyecto: `codigo`, `nombre`,
+`pim`, `devengado`, `avance_pct`.
+
+## 6. Documenta
 
 - Fila nueva en la tabla de tools del README (`internal/meta` lo exige).
 - Entrada en `CHANGELOG.md`.

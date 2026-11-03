@@ -21,6 +21,29 @@ go test ./...
 - `go vet ./...` and `gofmt -l .` must be clean.
 - When an upstream changes shape, capture a fresh fixture, commit it next to
   the parser change, and record what changed in `docs/SOURCES.md`.
+- **Fixtures must look like the real thing, not like the ideal.** A fixture
+  that says `MINISTERIO DE SALUD` passed while the live service — which writes
+  `M. DE SALUD` — returned nothing. If a service is inconsistent, the fixture
+  carries both forms.
+- `internal/mcpserver` asserts every tool description carries purpose, usage
+  guidance and behaviour (DOCS-STANDARD §6), and `internal/meta` asserts the
+  README tool table matches the registry. Both fail if you add a tool and stop
+  there.
+
+## Layout
+
+| Package | What lives there |
+|---|---|
+| `internal/core` | The command contract: params, input validation, sinks, errors and exit codes |
+| `internal/httpx`, `cache` | One HTTP client with the disk cache, retries and per-host politeness |
+| `internal/render` | The five output formats and the JSON envelope |
+| `internal/analysis` | Statistics and findings (totals, ranking, concentration, idle budget) |
+| `internal/report` | Deliverables: xlsx, self-contained HTML, Markdown |
+| `internal/modules/*` | One MEF source each, plus `informes` (analysis/reports) and `asistente` (routing) |
+
+Commands that need another command's data run it through a capturing sink
+(see `internal/modules/informes`) instead of re-querying: a report of spending
+is the output of `mef_gasto`, not a second implementation of it.
 
 ## The contract
 

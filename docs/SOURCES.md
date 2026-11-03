@@ -49,7 +49,17 @@ Parece una app ASP.NET WebForms con estado (ViewState, postbacks), pero su URL d
 - **Fecha de actualización** en `span#ctl00_CPH1_LblLastUpdate` ("09 de septiembre de 2026."). Se actualiza diariamente.
 - Con `_tgt=xls` la misma URL devuelve un "Excel" que en realidad es HTML en Windows-1252. No se usa.
 
-**Verificación:** la suma por nivel en 2026 da PIA 257,561,619,143, PIM 287,487,003,991 y avance 62.2 %, idéntica a la fila TOTAL de la web.
+**Nombres de entidades (base de `mef_entidades`):** las listas de dimensiones son también el directorio de entidades, y **el MEF abrevia sin criterio dentro de la misma página**:
+
+```
+009 | M. DE ECONOMIA Y FINANZAS          036 | MINISTERIO DE TRANSPORTES Y COMUNICACIONES
+011 | M. DE SALUD                        040 | MINISTERIO DE DESARROLLO E INCLUSION SOCIAL
+010 | M. DE EDUCACION                    037 | MINISTERIO DE VIVIENDA, CONSTRUCCION Y SANEAMIENTO
+```
+
+Por eso la búsqueda por nombre no puede exigir la palabra completa: `ministerio` se busca también como `m.`, y los conectores (`de`, `del`, `la`) se ignoran porque el MEF los incluye u omite a voluntad (`GOBIERNO REGIONAL DEL DEPARTAMENTO DE PUNO`). Las municipalidades sí usan el nombre completo (`MUNICIPALIDAD PROVINCIAL DE AREQUIPA`), pero conviven con mancomunidades que contienen el mismo topónimo.
+
+**Verificación:** la suma por nivel en 2026 da PIA 257,561,619,143, PIM 287,487,003,991 y avance 62.2 %, idéntica a la fila TOTAL de la web (corte 2026-09-09). La ficha del pliego 011 (`M. DE SALUD`) devolvió 8,024.7 millones de devengado el 2026-10-03.
 
 ## Datos Abiertos (`datosabiertos`)
 
